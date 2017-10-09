@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
 //read, parse, execute 
 //1-Read line from user, store to buffer
@@ -19,16 +21,18 @@
 void parseCmd();
 void clearCmd();
 void fillCmd();
-void splitCmd();
+int splitCmd();
 
 static char* cwd;
-
 char input='\0';
-int bufferChars = 0;
+int buffStuff = 0;
 char buffer[MAX_PARAMS]; //array for storing input from cmd line
-
 char* myArgv[10]; //array of char pointers, for storing arguments
 int myArgc = 0; //to keep track of number of arguments
+
+char* fileArgs[5];
+char* fileArgNum;
+
 
 void prompt() {
 	printf("%s  ~%s $ ", getenv("LOGNAME"), getcwd(cwd, 1024));
@@ -41,27 +45,55 @@ void welcome() {
     printf("\n\n");
 
 }
+
+/**
+* Grab user input and store into a buffer
+*/
 void parseCmd() {
-	//puts("In parse function");
    clearCmd();
  //gets each char and puts it into a buffer while not newline
 	while((input != '\n')){
-		buffer[bufferChars++] = input; 
+		buffer[buffStuff++] = input; 
 		input = getchar(); 
 	}
-	buffer[bufferChars] = 0x00;
-
+	buffer[buffStuff] = 0x00; //set to 0
 	splitCmd();
-
-//***PRINT user input BUFFER***//
-	// puts("User input buffer contents:");
-	// 	for (int i = 0; i < sizeof(buffer); ++i) {
-	// 		if(buffer[i] != '\0')
-	// 	printf("[%d]: %c\n",i,buffer[i]);
-	// }
-	// puts("");
 }
 
+/**
+* Look for redirects and pipe
+*/
+int splitCmd() {
+	int descriptor;
+	int mark;
+	for (int i = 0; i < MAX_PARAMS; ++i) {
+		if(buffer[i] == '>') { //out
+			puts("found the mark");
+			mark = i;
+			fileArgNum = fileArgs[i]; //storing the filename for redirect
+			descriptor = 1;
+		}
+			else if(buffer[i] == '<') { //in
+			puts("found the mark");
+			mark = i;
+			descriptor = 0;
+		}
+
+		//NEED TO make separate arrays for arg1 and arg2
+			else if (buffer[i] == '|') { //pipe
+			puts("found the mark");
+			mark = i;
+			descriptor = 2;
+		}
+	}
+	printf("Mark is: %d\n", mark);
+
+	return descriptor;
+}
+
+/**
+* Take the buffer with chars in it and tokenize and store to char array
+*/
 void fillCmd() {
 	//puts("In fill function");
 	char* bPtr; //token
@@ -70,7 +102,6 @@ void fillCmd() {
 	int i;
 
 	while(bPtr) { 
-		//printf("bPtr= %s\n", bPtr);
 		myArgv[myArgc] = bPtr; //put words into the array
 		bPtr = strtok(NULL, DELIMITERS);
 		myArgc++; //go to next array element
@@ -83,33 +114,28 @@ void fillCmd() {
 	}
 }
 
-void splitCmd() {
-	int mark;
-	for (int i = 0; i < MAX_PARAMS; ++i) {
-		if(buffer[i] == '<') {
-			mark = i;
-			printf("%d\n", mark);
-		}
-	}
-}
 
+/**
+* Pretty self explanatory
+*/
 void clearCmd() {
-	//puts("In clear function");
 	//clear buffer
 		for (int i = 0; i < sizeof(buffer); ++i) {
 			buffer[i] = '\0';
 	    }
 
         while (myArgc != 0) {
-                myArgv[myArgc] = NULL; // delete the pointer to the string
-                myArgc--;       // decrement the number of words in the command line
+             myArgv[myArgc] = NULL; // delete the pointer to the string
+             myArgc--;       // decrement the number of words in the command line
         }
-        bufferChars = 0;       // erase the number of chars in the buffer
+        buffStuff = 0;       // erase the number of chars in the buffer
 }
 
-void execute(char* cmd[]) {
-	//puts("In execute function");
-
+/**
+* Pipe, fork and execute. This should be split up into separate functions
+* I just didn't have time to make it neater
+*/
+void execute(char* cmd[], int fileDescriptor) {
 	pid_t pid;
 	int status;
 	int bytesRead;
@@ -117,11 +143,12 @@ void execute(char* cmd[]) {
 	int pidC, pidP; //for printing process IDs
 
 	//if the first argument is string "exit", quit
-    if (strcmp("exit", myArgv[0]) == 0) {
+    if (strcmp("exit", myArgv[0]) == 0) { //if strcmp returns 0 they're ==
           exit(EXIT_SUCCESS);
     }
 
-    if (strcmp("cd", myArgv[0]) == 0) { //if strcmp returns 0 they're ==
+    //this works, but for some reason gives me execvp error
+    if (strcmp("cd", myArgv[0]) == 0) { 
           if(chdir(myArgv[1]) == -1) {
           	printf("The directory %s does not exist\n", myArgv[1]);
           }
@@ -142,19 +169,19 @@ void execute(char* cmd[]) {
 			break;
 
 		case 0: //+++child
-		  // puts("I am the child");
-		   pidP = getppid();
-		   pidC = getpid();
-		  // printf("Child here, my parent pid: %d, My pid: %d\n", pidP, pidC);
-				if(close(fd[0]) == -1) { //close read end of pipe
-					perror("Close fd[0]error");
-					exit(1);
-				}
+			if(close(fd[0]) == -1) { //close read end of pipe
+				perror("Close fd[0]error");
+				exit(1);
+			}
+
 				//redirect stdout to the write end of pipe 
-				if(dup2(fd[1], STDOUT_FILENO) == -1) {
-					perror("Couldn't dup2");
-					exit(1);
-				}
+			if (splitCmd() == 1) { //then it's an out command
+				fileDescriptor = open(fileArgNum, O_CREAT | O_TRUNC | O_WRONLY, 0600);                                        // open file for read only (it's STDIN)
+      			dup2(fileDescriptor, STDOUT_FILENO);
+        		close(fileDescriptor);
+        		exit(1);
+			}
+
 			//execute commands	
 				puts("---Command results:---");
 			if(execvp(*cmd, cmd) == -1) {
@@ -164,38 +191,34 @@ void execute(char* cmd[]) {
 			break;
 
 		default: //+++parent
-		//puts("I am the parent");
 			if (close(fd[1]) == -1) {  //
 				perror("Couldn't close");
 				exit(1);
 			}
 
+			//read from fd[0] (child), and write to stdout
 			while(bytesRead = read(fd[0], readBuffer, 1) != 0) {
 				if (bytesRead == -1) {
 					perror("read error");
 					exit(1);
 				}
-
 				write(1,readBuffer,1);
 			}
-
+			//wait for child to die and print exit status
 			waitpid(pid, &status, WNOHANG);	
 			if(WIFEXITED(status)){
 			printf("Exited with status: %d\n", WEXITSTATUS(status));
 		}
-			pidC = getpid();
-			//printf("Parent here, my pid:%d\n", pidC);
 	}
 	close(*fd);
 }
 
-
 int main(int argc, char* argv[]) {
 	welcome();
 	prompt();
- while(1) {
+	int descriptor = splitCmd(); //determine how to execute
 
-//input=getchar(), fixed issue where parse was executing before input entered
+ while(1) {
     input = getchar(); 
 	switch(input) {
 		case '\n':
@@ -204,7 +227,7 @@ int main(int argc, char* argv[]) {
 		default:
 		   parseCmd();
 		   fillCmd();
-		   execute(myArgv);
+		   execute(myArgv, descriptor);
 		   prompt();
 		   break;
 	}
