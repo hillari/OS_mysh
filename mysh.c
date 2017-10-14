@@ -23,8 +23,8 @@ void clearCmd();
 void fillCmd();
 int splitCmd();
 
-static char* cwd;
-char input='\0';
+static char* cwd;  //for cd
+static char input='\0';
 int buffStuff = 0;
 char buffer[MAX_PARAMS]; //array for storing input from cmd line
 char* myArgv[10]; //array of char pointers, for storing arguments
@@ -33,18 +33,6 @@ int myArgc = 0; //to keep track of number of arguments
 char* fileArgs[5];
 char* fileArgNum;
 
-
-void prompt() {
-	printf("%s  ~%s $ ", getenv("LOGNAME"), getcwd(cwd, 1024));
-}
-
-void welcome() {
-	printf("\n-------------------------------------------------\n");
-	puts("Welcome to my shell. Enter a command, or type exit");
-	printf("-------------------------------------------------\n");
-    printf("\n\n");
-
-}
 
 /**
 * Grab user input and store into a buffer
@@ -86,7 +74,7 @@ int splitCmd() {
 			descriptor = 2;
 		}
 	}
-	printf("Mark is: %d\n", mark);
+	printf("Mark is at: [%d]\n", mark);
 
 	return descriptor;
 }
@@ -125,7 +113,7 @@ void clearCmd() {
 	    }
 
         while (myArgc != 0) {
-             myArgv[myArgc] = NULL; // delete the pointer to the string
+             myArgv[myArgc] = NULL; // delete element at argc
              myArgc--;       // decrement the number of words in the command line
         }
         buffStuff = 0;       // erase the number of chars in the buffer
@@ -133,14 +121,13 @@ void clearCmd() {
 
 /**
 * Pipe, fork and execute. This should be split up into separate functions
-* I just didn't have time to make it neater
+* I just didn't have time to make it more prettier
 */
 void execute(char* cmd[], int fileDescriptor) {
 	pid_t pid;
 	int status;
 	int bytesRead;
 	char readBuffer[50]; //what size??
-	int pidC, pidP; //for printing process IDs
 
 	//if the first argument is string "exit", quit
     if (strcmp("exit", myArgv[0]) == 0) { //if strcmp returns 0 they're ==
@@ -150,7 +137,7 @@ void execute(char* cmd[], int fileDescriptor) {
     //this works, but for some reason gives me execvp error
     if (strcmp("cd", myArgv[0]) == 0) { 
           if(chdir(myArgv[1]) == -1) {
-          	printf("The directory %s does not exist\n", myArgv[1]);
+          	printf("The directory '%s' does not exist\n", myArgv[1]);
           }
     }
 
@@ -170,16 +157,20 @@ void execute(char* cmd[], int fileDescriptor) {
 
 		case 0: //+++child
 			if(close(fd[0]) == -1) { //close read end of pipe
-				perror("Close fd[0]error");
+				perror("Error closing stdin (fd[0])");
 				exit(1);
 			}
 
 				//redirect stdout to the write end of pipe 
-			if (splitCmd() == 1) { //then it's an out command
-				fileDescriptor = open(fileArgNum, O_CREAT | O_TRUNC | O_WRONLY, 0600);                                        // open file for read only (it's STDIN)
+			if (splitCmd() == 1) { //then it's an out/write command
+				fileDescriptor = open(fileArgNum, O_CREAT | O_TRUNC | O_WRONLY, 0600);
       			dup2(fileDescriptor, STDOUT_FILENO);
         		close(fileDescriptor);
-        		exit(1);
+  				//do i need to exit(1)?
+			} else if (splitCmd() == 0) { //then ts in in/rd command
+				fileDescriptor = open(fileArgNum, STDIN_FILENO); 
+      			dup2(fileDescriptor, STDOUT_FILENO);
+        		close(fileDescriptor);
 			}
 
 			//execute commands	
@@ -211,6 +202,18 @@ void execute(char* cmd[], int fileDescriptor) {
 		}
 	}
 	close(*fd);
+}
+
+void prompt() {
+	printf("%s  ~%s $ ", getenv("LOGNAME"), getcwd(cwd, 1024));
+}
+
+void welcome() {
+	printf("\n---------------------------------------------------\n");
+	puts("Welcome to my shell. Enter a command, or type exit");
+	printf("---------------------------------------------------\n");
+    printf("\n\n");
+
 }
 
 int main(int argc, char* argv[]) {
