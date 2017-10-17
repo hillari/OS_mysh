@@ -30,15 +30,20 @@ int myArgc = 0; //to keep track of number of arguments
 
 /**
 * Grab user input and store into a buffer. Gets each char and puts it into a buffer while not newline
-* <Maybe not getchar() ?? - reads next char from stream & returns as unsigned char cast to int
+* <Maybe not getchar() ?? 
+* returns the character read as an unsigned char cast to an int or EOF on endoffile error
 */
+
 void parseCmd() {
    clearCmd();
 	while((input != '\n')){
 		buffer[stuff++] = input; 
 		input = getchar(); 
+		if(input == EOF) { //check for CTRL+D *only works if you do it twice?!
+			exit(1);
+		}
 	}
-	buffer[stuff] = 0x00; //set to 0 ,_ WHY.  Saw this somewhere 
+	buffer[stuff] = 0x00; //set to 0 ,_ WHY.  Saw this somewhere. adds 0?
 }
 
 
@@ -66,22 +71,45 @@ does NOT include delimiters */
 }
 
 /**
-* Look for redirects and pipe. Called in execute()
+* Look for redirects and pipe, set descriptor accordingly,
+* and store any needed files for duping. Called in execute()
 */
 int splitCmd() {
 	int descriptor;
 
 	for (int i = 0; i < myArgc; ++i) {
+
 		if(strcmp(">",myArgv[i]) == 0) {
 			outputFile = myArgv[i+1];
+			descriptor = 1;
 			printf("Output file is: %s\n", outputFile);
-			
+
 		//shift elements in array so we don't store ">"
 			for (int j = i; j < myArgc; ++j) {
-				myArgv[j] = myArgv[j+1];
-				myArgc--;
+				 myArgv[j] = myArgv[j+1];
+				 myArgc--;
 			}
-			descriptor = 1;
+		}
+
+		else if (strcmp("<",myArgv[i]) == 0) {
+			inputFile = myArgv[i+1];
+			descriptor = 0;
+			printf("Input file is: %s\n", inputFile);
+		//shift elements in array so we don't store "<"
+			for (int j = i; j < myArgc; ++j) {
+				  myArgv[j] = myArgv[j+1];
+				  myArgc--;
+			}    
+		}
+
+		else if(strcmp("|",myArgv[i]) == 0) {
+			puts("pipe found");
+			descriptor = 2;
+		  //shift elements in array so we don't store "|"
+			for (int j = i; j < myArgc; ++j) {
+				 myArgv[j] = myArgv[j+1];
+				 myArgc--;
+			}
 		}
 	}
 	// 	puts("Argv array contents after shuffling split:");
@@ -90,8 +118,6 @@ int splitCmd() {
 	// }
 	return descriptor;
 }
-
-
 
 
 /**
@@ -119,6 +145,8 @@ void execute(char* cmd[]) {
 	int status;
 	int bytesRead;
 	char readBuffer[50]; //what size??
+
+	int fd0, fd1;
 
 
 int descriptor = splitCmd();
@@ -162,17 +190,39 @@ int descriptor = splitCmd();
 			}
 
 	//--Now child ha stdin from the input file, stdout to output file
-			if (descriptor == 1) { //then it's out/write command
+			if (descriptor == 1) { //OUT/WRITE command
 				int fd1 = open(outputFile, O_CREAT | O_WRONLY, 0600);
-      			dup2(fd1, STDOUT_FILENO); //redirect stdout to fd1 (outputFile)
-        		close(fd1);
+			    fd[1] = fd1;
+      			dup2(fd[1], STDOUT_FILENO); //redirect stdout to fd[1] (outputFile)
+        		close(fd[1]);
   				//do i need to exit(1)?
 			} 
-			if (descriptor == 0) { //then its in/rd command
+
+			if (descriptor == 0) { //IN/READ command
 				int fd0 = open(inputFile, STDIN_FILENO); //FIXMEEE
-      			dup2(fd0, STDOUT_FILENO);
-        		close(fd0);
+				fd[0] = fd0;
+      			dup2(fd[0], STDOUT_FILENO);
+        		close(fd[0]);
 			}
+
+			// if(descriptor == 2) { //PIPE command
+			// 	pid_t ccpid;
+			// 	ccpid = fork();
+
+			// 	switch(ccpid) {
+
+			// 		case -1:
+			// 		perror("second child fork fail");
+			// 		break;
+
+			// 		case 0:
+			// 		//dupe logic
+
+			// 		default:
+			// 		//parent logic
+			// 	}
+
+			// }
 
 			//execute commands	
 				//puts("---Command results:---");
