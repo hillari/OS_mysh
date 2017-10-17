@@ -8,14 +8,9 @@
 #include <string.h>
 #include <fcntl.h>
 
-//read, parse, execute 
-//1-Read line from user, store to buffer
-//2-tokenize line, ***put commands into array 
-//next- fork where needed, execute, pipe, etc.....
-
 #define BUF_SIZE 1024
 #define MAX_PARAMS 100
-#define DELIMITERS " |<>\n"
+#define DELIMITERS " \n\0"
 
 //PROTOTYPES
 void parseCmd();
@@ -23,88 +18,84 @@ void clearCmd();
 void fillCmd();
 int splitCmd();
 
+char* outputFile;
+char* inputFile;
+
 static char* cwd;  //for cd
 static char input='\0';
-int buffStuff = 0;
+int stuff = 0;
 char buffer[MAX_PARAMS]; //array for storing input from cmd line
 char* myArgv[10]; //array of char pointers, for storing arguments
 int myArgc = 0; //to keep track of number of arguments
 
-char* fileArgs[5];
-char* fileArgNum;
-
-
 /**
-* Grab user input and store into a buffer
+* Grab user input and store into a buffer. Gets each char and puts it into a buffer while not newline
+* <Maybe not getchar() ?? - reads next char from stream & returns as unsigned char cast to int
 */
 void parseCmd() {
    clearCmd();
- //gets each char and puts it into a buffer while not newline
 	while((input != '\n')){
-		buffer[buffStuff++] = input; 
+		buffer[stuff++] = input; 
 		input = getchar(); 
 	}
-	buffer[buffStuff] = 0x00; //set to 0
-	splitCmd();
+	buffer[stuff] = 0x00; //set to 0 ,_ WHY.  Saw this somewhere 
+}
+
+
+/**
+* Take the buffer,tokenize, and store to char array
+*/
+void fillCmd() {
+	char* bPtr; //token
+	bPtr = strtok(buffer, DELIMITERS); 
+/*STRTOK - each cal to strtok returns null-terminated string containing the next token. 
+does NOT include delimiters */
+	while(bPtr) { 
+		myArgv[myArgc] = bPtr; //each bPtr equals a string we want, so store to array
+		bPtr = strtok(NULL, DELIMITERS); //tokenize again. Start of net token foud by scanning forward to next delimiter byte
+		myArgc++; //increment index
+	}
+
+//splitCmd();
+
+//***PRINT arguments array***//
+	// puts("Argv array contents BEFORE split:");
+	// for (int i = 0; i < myArgc; i++) { 
+	// 	printf("[%d]: %s\n",i,myArgv[i]);
+	// }
 }
 
 /**
-* Look for redirects and pipe
+* Look for redirects and pipe. Called in execute()
 */
 int splitCmd() {
 	int descriptor;
-	int mark;
-	for (int i = 0; i < MAX_PARAMS; ++i) {
-		if(buffer[i] == '>') { //out
-			puts("found the mark");
-			mark = i;
-			fileArgNum = fileArgs[i]; //storing the filename for redirect
+
+	for (int i = 0; i < myArgc; ++i) {
+		if(strcmp(">",myArgv[i]) == 0) {
+			outputFile = myArgv[i+1];
+			printf("Output file is: %s\n", outputFile);
+			
+		//shift elements in array so we don't store ">"
+			for (int j = i; j < myArgc; ++j) {
+				myArgv[j] = myArgv[j+1];
+				myArgc--;
+			}
 			descriptor = 1;
 		}
-			else if(buffer[i] == '<') { //in
-			puts("found the mark");
-			mark = i;
-			descriptor = 0;
-		}
-
-		//NEED TO make separate arrays for arg1 and arg2
-			else if (buffer[i] == '|') { //pipe
-			puts("found the mark");
-			mark = i;
-			descriptor = 2;
-		}
 	}
-	printf("Mark is at: [%d]\n", mark);
-
+	// 	puts("Argv array contents after shuffling split:");
+	// for (int i = 0; i < myArgc; i++) { 
+	// 	printf("[%d]: %s\n",i,myArgv[i]);
+	// }
 	return descriptor;
 }
 
-/**
-* Take the buffer with chars in it and tokenize and store to char array
-*/
-void fillCmd() {
-	//puts("In fill function");
-	char* bPtr; //token
-	bPtr = strtok(buffer, DELIMITERS); 
-	char* fileArg;
-	int i;
 
-	while(bPtr) { 
-		myArgv[myArgc] = bPtr; //put words into the array
-		bPtr = strtok(NULL, DELIMITERS);
-		myArgc++; //go to next array element
-	}
-
-//***PRINT arguments array***//
-	puts("Argv array contents:");
-	for (int i = 0; i < myArgc; i++) { //do i< myargC
-		printf("[%d]: %s\n",i,myArgv[i]);
-	}
-}
 
 
 /**
-* Pretty self explanatory
+* Clear command argument array and user input buffer
 */
 void clearCmd() {
 	//clear buffer
@@ -116,18 +107,25 @@ void clearCmd() {
              myArgv[myArgc] = NULL; // delete element at argc
              myArgc--;       // decrement the number of words in the command line
         }
-        buffStuff = 0;       // erase the number of chars in the buffer
+        stuff = 0;       // erase the number of chars in the buffer
 }
 
 /**
 * Pipe, fork and execute. This should be split up into separate functions
 * I just didn't have time to make it more prettier
 */
-void execute(char* cmd[], int fileDescriptor) {
+void execute(char* cmd[]) {
 	pid_t pid;
 	int status;
 	int bytesRead;
 	char readBuffer[50]; //what size??
+
+
+int descriptor = splitCmd();
+	// puts("Argv array contents AFTER split:");
+	// for (int i = 0; i < myArgc; i++) { 
+	// 	printf("[%d]: %s\n",i,myArgv[i]);
+	// }
 
 	//if the first argument is string "exit", quit
     if (strcmp("exit", myArgv[0]) == 0) { //if strcmp returns 0 they're ==
@@ -147,6 +145,7 @@ void execute(char* cmd[], int fileDescriptor) {
 		perror("Pipe error");
 		exit(1);
 	}
+
 //--create child process
 	pid = fork();
 	switch(pid) {
@@ -155,26 +154,28 @@ void execute(char* cmd[], int fileDescriptor) {
 			perror("You forking failed");
 			break;
 
+//we don't want to close fd[0] here do we?
 		case 0: //+++child
 			if(close(fd[0]) == -1) { //close read end of pipe
 				perror("Error closing stdin (fd[0])");
 				exit(1);
 			}
 
-				//redirect stdout to the write end of pipe 
-			if (splitCmd() == 1) { //then it's an out/write command
-				fileDescriptor = open(fileArgNum, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-      			dup2(fileDescriptor, STDOUT_FILENO);
-        		close(fileDescriptor);
+	//--Now child ha stdin from the input file, stdout to output file
+			if (descriptor == 1) { //then it's out/write command
+				int fd1 = open(outputFile, O_CREAT | O_WRONLY, 0600);
+      			dup2(fd1, STDOUT_FILENO); //redirect stdout to fd1 (outputFile)
+        		close(fd1);
   				//do i need to exit(1)?
-			} else if (splitCmd() == 0) { //then ts in in/rd command
-				fileDescriptor = open(fileArgNum, STDIN_FILENO); 
-      			dup2(fileDescriptor, STDOUT_FILENO);
-        		close(fileDescriptor);
+			} 
+			if (descriptor == 0) { //then its in/rd command
+				int fd0 = open(inputFile, STDIN_FILENO); //FIXMEEE
+      			dup2(fd0, STDOUT_FILENO);
+        		close(fd0);
 			}
 
 			//execute commands	
-				puts("---Command results:---");
+				//puts("---Command results:---");
 			if(execvp(*cmd, cmd) == -1) {
 				perror("execvp error");
 				exit(1);
@@ -204,10 +205,16 @@ void execute(char* cmd[], int fileDescriptor) {
 	close(*fd);
 }
 
+/**
+ * Prints a prompt 
+ */
 void prompt() {
 	printf("%s  ~%s $ ", getenv("LOGNAME"), getcwd(cwd, 1024));
 }
 
+/**
+ * Prints a welcome screen screen
+ */
 void welcome() {
 	printf("\n---------------------------------------------------\n");
 	puts("Welcome to my shell. Enter a command, or type exit");
@@ -219,7 +226,6 @@ void welcome() {
 int main(int argc, char* argv[]) {
 	welcome();
 	prompt();
-	int descriptor = splitCmd(); //determine how to execute
 
  while(1) {
     input = getchar(); 
@@ -230,7 +236,7 @@ int main(int argc, char* argv[]) {
 		default:
 		   parseCmd();
 		   fillCmd();
-		   execute(myArgv, descriptor);
+		   execute(myArgv);
 		   prompt();
 		   break;
 	}
