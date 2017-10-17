@@ -81,6 +81,8 @@ int splitCmd() {
 
 		if(strcmp(">",myArgv[i]) == 0) {
 			outputFile = myArgv[i+1];
+			//free(myArgv[i+1]);
+			myArgv[i+1] = NULL;
 			descriptor = 1;
 			printf("Output file is: %s\n", outputFile);
 
@@ -93,6 +95,7 @@ int splitCmd() {
 
 		else if (strcmp("<",myArgv[i]) == 0) {
 			inputFile = myArgv[i+1];
+			myArgv[i+1] = NULL;
 			descriptor = 0;
 			printf("Input file is: %s\n", inputFile);
 		//shift elements in array so we don't store "<"
