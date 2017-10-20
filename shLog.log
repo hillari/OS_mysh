@@ -1,0 +1,117 @@
+Script started on Thu 19 Oct 2017 07:31:19 PM AKDT
+]0;hillari@inspiron ~/Dropbox/School/Fall17/OS_320/3[01;32mhillari@inspiron[00m [01;34m~/Dropbox/School/Fall17/OS_320/3 $[00m ./a.out 
+
+---------------------------------------------------------------
+ *Welcome to my shell. Enter a command, or type exit/CTRL+D* 
+---------------------------------------------------------------
+
+
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out  bar.txt	DesignDescription.odt  dShLog.log  foo.txt  mysh.c  shLog.log
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls -a
+.   a.out    DesignDescription.odt  foo.txt  mysh.c
+..  bar.txt  dShLog.log		    .git     shLog.log
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cat foo
+cat: foo: No such file or directory
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cat foo.txt
+hi
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ touch hello.txt
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out	 DesignDescription.odt	foo.txt    mysh.c
+bar.txt  dShLog.log		hello.txt  shLog.log
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls -l
+total 96
+-rwxrwxr-x 1 hillari hillari 14160 Oct 18 20:48 a.out
+-rw-rw-r-- 1 hillari hillari    43 Oct 17 12:27 bar.txt
+-rw-rw-r-- 1 hillari hillari 27663 Oct 18 20:14 DesignDescription.odt
+-rw-rw-r-- 1 hillari hillari  2945 Oct 18 20:58 dShLog.log
+-rw-rw-rw- 1 hillari hillari     3 Oct 18 20:51 foo.txt
+-rw-rw-r-- 1 hillari hillari     0 Oct 19 19:31 hello.txt
+-rw-rw-r-- 1 hillari hillari  6808 Oct 18 20:46 mysh.c
+-rw-rw-r-- 1 hillari hillari     0 Oct 19 19:31 shLog.log
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ chmod 777 hello.tx  x tt xt
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls -l
+total 96
+-rwxrwxr-x 1 hillari hillari 14160 Oct 18 20:48 a.out
+-rw-rw-r-- 1 hillari hillari    43 Oct 17 12:27 bar.txt
+-rw-rw-r-- 1 hillari hillari 27663 Oct 18 20:14 DesignDescription.odt
+-rw-rw-r-- 1 hillari hillari  2945 Oct 18 20:58 dShLog.log
+-rw-rw-rw- 1 hillari hillari     3 Oct 18 20:51 foo.txt
+-rwxrwxrwx 1 hillari hillari     0 Oct 19 19:31 hello.txt
+-rw-rw-r-- 1 hillari hillari  6808 Oct 18 20:46 mysh.c
+-rw-rw-r-- 1 hillari hillari     0 Oct 19 19:31 shLog.log
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ rm hello.txt
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out  bar.txt	DesignDescription.odt  dShLog.log  foo.txt  mysh.c  shLog.log
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ time
+Usage: time [-apvV] [-f format] [-o file] [--append] [--verbose]
+       [--portability] [--format=format] [--output=file] [--version]
+       [--quiet] [--help] command [arg...]
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ whoami
+hillari
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ps
+  PID TTY          TIME CMD
+12167 pts/1    00:00:00 bash
+12188 pts/1    00:00:00 a.out
+12194 pts/1    00:00:00 touch <defunct>
+12230 pts/1    00:00:00 ps
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ sleep 5
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cal
+    October 2017      
+Su Mo Tu We Th Fr Sa  
+ 1  2  3  4  5  6  7  
+ 8  9 10 11 12 13 14  
+15 16 17 18 [7m19[27m 20 21  
+22 23 24 25 26 27 28  
+29 30 31              
+                      
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cal > hello.txt
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cat hello.txt
+    October 2017      
+Su Mo Tu We Th Fr Sa  
+ 1  2  3  4  5  6  7  
+ 8  9 10 11 12 13 14  
+15 16 17 18 _1_9 20 21  
+22 23 24 25 26 27 28  
+29 30 31              
+                      
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cd /home
+hillari  ~/home $ ls
+hillari
+hillari  ~/home $ cd hillari
+hillari  ~/home/hillari $ s ls
+Android		       Downloads	  grep		    Public
+AndroidStudioProjects  Dropbox		  Music		    Templates
+cpp-oxygen	       eclipse-workspace  netbeans-8.2	    Videos
+Desktop		       fooDir		  NetBeansProjects  wc
+Documents	       glassfish-4.1.1	  Pictures
+hillari  ~/home/hillari $ cd Dr	opboc       ../
+hillari  ~/home $ pwd
+/home
+hillari  ~/home $ cd asdjhf
+The directory 'asdjhf' does not exist
+hillari  ~/home $ c cd /hillai ri/Dropbox/School/Fall17/OS_320/3
+The directory '/hillari/Dropbox/School/Fall17/OS_320/3' does not exist
+hillari  ~/home $ ls
+hillari
+hillari  ~/home $ cd hillari
+hillari  ~/home/hillari $ ls
+Android		       Downloads	  grep		    Public
+AndroidStudioProjects  Dropbox		  Music		    Templates
+cpp-oxygen	       eclipse-workspace  netbeans-8.2	    Videos
+Desktop		       fooDir		  NetBeansProjects  wc
+Documents	       glassfish-4.1.1	  Pictures
+hillari  ~/home/hillari $ cd Dropboc/School        x/School
+hillari  ~/home/hillari/Dropbox/School $ cd Fall12 7
+hillari  ~/home/hillari/Dropbox/School/Fall17 $ cd OS_320/3
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out	 DesignDescription.odt	foo.txt    mysh.c
+bar.txt  dShLog.log		hello.txt  shLog.log
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ mkdir newDir
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cd New   newDir
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3/newDir $ touch       cd ../
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ exit
+]0;hillari@inspiron ~/Dropbox/School/Fall17/OS_320/3[01;32mhillari@inspiron[00m [01;34m~/Dropbox/School/Fall17/OS_320/3 $[00m exit
+exit
+
+Script done on Thu 19 Oct 2017 07:38:27 PM AKDT

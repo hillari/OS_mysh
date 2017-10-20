@@ -30,7 +30,7 @@ int myArgc = 0; //to keep track of number of arguments
 
 /**
 * Grab user input and store into a buffer. Gets each char and puts it into a buffer while not newline
-* <Maybe not getchar() ?? 
+* 
 * returns the character read as an unsigned char cast to an int or EOF on endoffile error
 */
 
@@ -39,11 +39,11 @@ void parseCmd() {
 	while((input != '\n')){
 		buffer[stuff++] = input; 
 		input = getchar(); 
-		if(input == EOF) { //check for CTRL+D *only works if you do it twice?!
+		if(input == EOF) { //check for CTRL+D *only works if you do it twice?
 			exit(1);
 		}
 	}
-	buffer[stuff] = 0x00; //set to 0 ,_ WHY.  Saw this somewhere. adds 0?
+	buffer[stuff] = 0x00; //set to 0
 }
 
 
@@ -57,11 +57,9 @@ void fillCmd() {
 does NOT include delimiters */
 	while(bPtr) { 
 		myArgv[myArgc] = bPtr; //each bPtr equals a string we want, so store to array
-		bPtr = strtok(NULL, DELIMITERS); //tokenize again. Start of net token foud by scanning forward to next delimiter byte
+		bPtr = strtok(NULL, DELIMITERS); //tokenize again. Start of next token foud by scanning forward to next delimiter byte
 		myArgc++; //increment index
 	}
-
-//splitCmd();
 
 //***PRINT arguments array***//
 	// puts("Argv array contents BEFORE split:");
@@ -81,10 +79,9 @@ int splitCmd() {
 
 		if(strcmp(">",myArgv[i]) == 0) {
 			outputFile = myArgv[i+1];
-			//free(myArgv[i+1]);
 			myArgv[i+1] = NULL;
 			descriptor = 1;
-			printf("Output file is: %s\n", outputFile);
+			//printf("Output file is: %s\n", outputFile);
 
 		//shift elements in array so we don't store ">"
 			for (int j = i; j < myArgc; ++j) {
@@ -97,7 +94,7 @@ int splitCmd() {
 			inputFile = myArgv[i+1];
 			myArgv[i+1] = NULL;
 			descriptor = 0;
-			printf("Input file is: %s\n", inputFile);
+			//printf("Input file is: %s\n", inputFile);
 		//shift elements in array so we don't store "<"
 			for (int j = i; j < myArgc; ++j) {
 				  myArgv[j] = myArgv[j+1];
@@ -106,7 +103,6 @@ int splitCmd() {
 		}
 
 		else if(strcmp("|",myArgv[i]) == 0) {
-			puts("pipe found");
 			descriptor = 2;
 		  //shift elements in array so we don't store "|"
 			for (int j = i; j < myArgc; ++j) {
@@ -192,13 +188,12 @@ int descriptor = splitCmd();
 				exit(1);
 			}
 
-	//--Now child ha stdin from the input file, stdout to output file
+	//--Now child has stdin from the input file, stdout to output file
 			if (descriptor == 1) { //OUT/WRITE command
 				int fd1 = open(outputFile, O_CREAT | O_WRONLY, 0600);
 			    fd[1] = fd1;
       			dup2(fd[1], STDOUT_FILENO); //redirect stdout to fd[1] (outputFile)
         		close(fd[1]);
-  				//do i need to exit(1)?
 			} 
 
 			if (descriptor == 0) { //IN/READ command
@@ -207,6 +202,8 @@ int descriptor = splitCmd();
       			dup2(fd[0], STDOUT_FILENO);
         		close(fd[0]);
 			}
+
+			//logic for piping 
 
 			// if(descriptor == 2) { //PIPE command
 			// 	pid_t ccpid;
@@ -228,7 +225,6 @@ int descriptor = splitCmd();
 			// }
 
 			//execute commands	
-				//puts("---Command results:---");
 			if(execvp(*cmd, cmd) == -1) {
 				perror("execvp error");
 				exit(1);
@@ -269,9 +265,9 @@ void prompt() {
  * Prints a welcome screen screen
  */
 void welcome() {
-	printf("\n---------------------------------------------------\n");
-	puts("Welcome to my shell. Enter a command, or type exit");
-	printf("---------------------------------------------------\n");
+	printf("\n---------------------------------------------------------------\n");
+	puts(" *Welcome to my shell. Enter a command, or type exit/CTRL+D* ");
+	printf("---------------------------------------------------------------\n");
     printf("\n\n");
 
 }
@@ -293,6 +289,6 @@ int main(int argc, char* argv[]) {
 		   prompt();
 		   break;
 	}
- }//while
+ }
  return 0;
-}//main
+}
