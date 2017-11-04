@@ -17,13 +17,14 @@ void parseCmd();
 void clearCmd();
 void fillCmd();
 int splitCmd();
+void prompt();
 
 char* outputFile;
 char* inputFile;
 
 static char* cwd;  //for cd
 static char input='\0';
-int stuff = 0;
+int stuff = 0; 
 char buffer[MAX_PARAMS]; //array for storing input from cmd line
 char* myArgv[10]; //array of char pointers, for storing arguments
 int myArgc = 0; //to keep track of number of arguments
@@ -73,7 +74,7 @@ does NOT include delimiters */
 * and store any needed files for duping. Called in execute()
 */
 int splitCmd() {
-	int descriptor;
+	int descriptor = -1;
 
 	for (int i = 0; i < myArgc; ++i) {
 
@@ -82,7 +83,6 @@ int splitCmd() {
 			myArgv[i+1] = NULL;
 			descriptor = 1;
 			//printf("Output file is: %s\n", outputFile);
-
 		//shift elements in array so we don't store ">"
 			for (int j = i; j < myArgc; ++j) {
 				 myArgv[j] = myArgv[j+1];
@@ -111,10 +111,10 @@ int splitCmd() {
 			}
 		}
 	}
-	// 	puts("Argv array contents after shuffling split:");
-	// for (int i = 0; i < myArgc; i++) { 
-	// 	printf("[%d]: %s\n",i,myArgv[i]);
-	// }
+		puts("Argv array contents after shuffling split:");
+	for (int i = 0; i < myArgc; i++) { 
+		printf("[%d]: %s\n",i,myArgv[i]);
+	}
 	return descriptor;
 }
 
@@ -139,20 +139,53 @@ void clearCmd() {
 * Pipe, fork and execute. This should be split up into separate functions
 * I just didn't have time to make it more prettier
 */
+
+void pipeCmd(char* cmd[]) {
+	puts("Got to pipe cmd");
+	int pfd[2];
+	int ccpid = fork(); //make a second child to handle the command after pipe
+		if(ccpid == -1) {
+			perror("Second pipe error");
+		}
+		if(ccpid > 0) { //grandchild
+			puts("got to gChild");
+			if(close(pfd[0]) == -1) {
+				perror("Close error in grandchild");
+				exit(1);
+			}
+			dup2(pfd[1], STDOUT_FILENO); //redirect output to fd[1] (wr)
+			if(execlp(cmd[1], cmd[1], NULL) == -1){
+				perror("execlp grandchild");
+				exit(1);
+			} //child will execute command 
+			puts("successful execute in gChild");
+		}
+		else { //parent
+			puts("parent of Gchild here");
+			wait(&ccpid); //waits for child to send output to pipe
+			if(close(pfd[0]) == -1){
+				perror("close fd[0] in pipeCmd");
+				exit(1);
+			}
+			dup2(pfd[0],STDIN_FILENO);
+			if (execvp(*cmd, cmd) == -1) {
+				perror("execvp in pipeCmd");
+				exit(1);
+			}
+			else {
+				puts("execvp execution in pipeCmd complete");
+			}
+		}
+}
+
 void execute(char* cmd[]) {
 	pid_t pid;
 	int status;
 	int bytesRead;
 	char readBuffer[50]; //what size??
-
 	int fd0, fd1;
 
-
-int descriptor = splitCmd();
-	// puts("Argv array contents AFTER split:");
-	// for (int i = 0; i < myArgc; i++) { 
-	// 	printf("[%d]: %s\n",i,myArgv[i]);
-	// }
+    int descriptor = splitCmd();
 
 	//if the first argument is string "exit", quit
     if (strcmp("exit", myArgv[0]) == 0) { //if strcmp returns 0 they're ==
@@ -163,6 +196,7 @@ int descriptor = splitCmd();
     if (strcmp("cd", myArgv[0]) == 0) { 
           if(chdir(myArgv[1]) == -1) {
           	printf("The directory '%s' does not exist\n", myArgv[1]);
+          	exit(1);
           }
     }
 
@@ -190,41 +224,55 @@ int descriptor = splitCmd();
 
 	//--Now child has stdin from the input file, stdout to output file
 			if (descriptor == 1) { //OUT/WRITE command
+				if(close(0) == -1) {
+					perror("Close stdin error"); //close normal stdin 
+					exit(1);
+				}
 				int fd1 = open(outputFile, O_CREAT | O_WRONLY, 0600);
+				if(fd1 == -1) {
+					perror("Error opening output file");
+					exit(1);
+				}
+
+				close(1); //close normal stdout
 			    fd[1] = fd1;
-      			dup2(fd[1], STDOUT_FILENO); //redirect stdout to fd[1] (outputFile)
-        		close(fd[1]);
+      			if (dup2(fd[1], STDOUT_FILENO) == -1) { //redirect stdout to fd[1] (outputFile)
+      				perror("Error duping stdout");
+      				exit(1);
+      			} 
+        		if (close(fd[1]) == -1) {
+        			perror("Error closing fd[1]");
+        			exit(1);
+        		}
 			} 
 
 			if (descriptor == 0) { //IN/READ command
-				int fd0 = open(inputFile, STDIN_FILENO); //FIXMEEE
+				if( close(1) == -1) {
+					perror("Close stdout error");
+					exit(1);
+				}
+				int fd0 = open(inputFile, O_RDONLY); //open the input file in read only mode
+				if(fd0 == -1) {
+					perror("Error opening input file");
+					exit(1);
+				}
+				close(0); //close normal stdout
 				fd[0] = fd0;
-      			dup2(fd[0], STDOUT_FILENO);
-        		close(fd[0]);
+      			if(dup2(fd[0], STDIN_FILENO) == -1) { //redirect stdin to fd[0] (inputFile)
+      				perror("Error duping stdin");
+      				exit(1);
+      			}
+        		if (close(fd[0]) == -1) {
+        			perror("Error closing fd[0]");
+        			exit(1);
+        		}
 			}
 
-			//logic for piping 
+			if (descriptor == 2) { //PIPE cmd
+				pipeCmd(myArgv);
+			}
 
-			// if(descriptor == 2) { //PIPE command
-			// 	pid_t ccpid;
-			// 	ccpid = fork();
-
-			// 	switch(ccpid) {
-
-			// 		case -1:
-			// 		perror("second child fork fail");
-			// 		break;
-
-			// 		case 0:
-			// 		//dupe logic
-
-			// 		default:
-			// 		//parent logic
-			// 	}
-
-			// }
-
-			//execute commands	
+		//~~execute commands	
 			if(execvp(*cmd, cmd) == -1) {
 				perror("execvp error");
 				exit(1);
@@ -232,7 +280,7 @@ int descriptor = splitCmd();
 			break;
 
 		default: //+++parent
-			if (close(fd[1]) == -1) {  //
+			if (close(fd[1]) == -1) {  //close the out end of the pipe/stdout
 				perror("Couldn't close");
 				exit(1);
 			}
@@ -243,7 +291,10 @@ int descriptor = splitCmd();
 					perror("read error");
 					exit(1);
 				}
-				write(1,readBuffer,1);
+				if (write(1,readBuffer,1) == -1) {
+					perror("write eRRor");
+					exit(1);
+				}
 			}
 			//wait for child to die and print exit status
 			waitpid(pid, &status, WNOHANG);	
