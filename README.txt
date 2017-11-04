@@ -6,4 +6,4 @@ Compile and run the program using makefile (simply type make), then use;
 
 <command> <arg1> <arg2> .... <argN> 
 
-To exit, use "CTRL+D" (twice, for some reason. Still working on this bug) or type "exit"
+To exit, use "CTRL+D", or type "exit"

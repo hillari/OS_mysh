@@ -8,7 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define BUF_SIZE 1024
+#define BUF_SIZE 4098
 #define MAX_PARAMS 100
 #define DELIMITERS " \n\0"
 
@@ -38,11 +38,14 @@ int myArgc = 0; //to keep track of number of arguments
 void parseCmd() {
    clearCmd();
 	while((input != '\n')){
-		buffer[stuff++] = input; 
-		input = getchar(); 
+
 		if(input == EOF) { //check for CTRL+D *only works if you do it twice?
 			exit(1);
 		}
+		
+		buffer[stuff++] = input; 
+		input = getchar(); 
+
 	}
 	buffer[stuff] = 0x00; //set to 0
 }
@@ -182,7 +185,7 @@ void execute(char* cmd[]) {
 	pid_t pid;
 	int status;
 	int bytesRead;
-	char readBuffer[50]; //what size??
+	char readBuffer[BUF_SIZE]; //what size??
 	int fd0, fd1;
 
     int descriptor = splitCmd();
@@ -207,17 +210,15 @@ void execute(char* cmd[]) {
 		exit(1);
 	}
 
-//--create child process
-	pid = fork();
-	switch(pid) {
+//--fork child process
+	if((pid = fork()) == -1) {
+		perror("Forking fail");
+		exit(1);
+	}
 
-		case -1:
-			perror("You forking failed");
-			break;
-
-//we don't want to close fd[0] here do we?
-		case 0: //+++child
-			if(close(fd[0]) == -1) { //close read end of pipe
+  //++CHILD++//
+	if (pid == 0) { 
+            if(close(fd[0]) == -1) { //close read end of pipe
 				perror("Error closing stdin (fd[0])");
 				exit(1);
 			}
@@ -228,7 +229,7 @@ void execute(char* cmd[]) {
 					perror("Close stdin error"); //close normal stdin 
 					exit(1);
 				}
-				int fd1 = open(outputFile, O_CREAT | O_WRONLY, 0600);
+				int fd1 = open(outputFile, O_CREAT | O_WRONLY, 0600); 
 				if(fd1 == -1) {
 					perror("Error opening output file");
 					exit(1);
@@ -277,9 +278,10 @@ void execute(char* cmd[]) {
 				perror("execvp error");
 				exit(1);
 			}	
-			break;
+	}
 
-		default: //+++parent
+  //++PARENT++//
+	else {
 			if (close(fd[1]) == -1) {  //close the out end of the pipe/stdout
 				perror("Couldn't close");
 				exit(1);
@@ -301,8 +303,10 @@ void execute(char* cmd[]) {
 			if(WIFEXITED(status)){
 			printf("Exited with status: %d\n", WEXITSTATUS(status));
 		}
+
 	}
 	close(*fd);
+
 }
 
 /**
