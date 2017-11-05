@@ -2,7 +2,9 @@ mysh is a simple shell implementation wirtten in C.  This is a homework assignme
 
 Usage:
 
-Compile and run the program using makefile (simply type make), then use;
+Compile the program using makefile (simply type make), then run the newly created executable 
+
+Program usage is;
 
 <command> <arg1> <arg2> .... <argN> 
 

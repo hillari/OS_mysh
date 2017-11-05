@@ -18,6 +18,7 @@ void clearCmd();
 void fillCmd();
 int splitCmd();
 void prompt();
+void printArgs(char* args[]);
 
 char* outputFile;
 char* inputFile;
@@ -26,8 +27,10 @@ static char* cwd;  //for cd
 static char input='\0';
 int stuff = 0; 
 char buffer[MAX_PARAMS]; //array for storing input from cmd line
-char* myArgv[10]; //array of char pointers, for storing arguments
+char* myArgv[100]; //array of char pointers, for storing arguments
+char* myArgv2[100];
 int myArgc = 0; //to keep track of number of arguments
+int myArgc2 = 0;
 
 /**
 * Grab user input and store into a buffer. Gets each char and puts it into a buffer while not newline
@@ -39,10 +42,10 @@ void parseCmd() {
    clearCmd();
 	while((input != '\n')){
 
-		if(input == EOF) { //check for CTRL+D *only works if you do it twice?
+		if(input == EOF) { //check for CTRL+D
 			exit(1);
 		}
-		
+
 		buffer[stuff++] = input; 
 		input = getchar(); 
 
@@ -64,12 +67,6 @@ does NOT include delimiters */
 		bPtr = strtok(NULL, DELIMITERS); //tokenize again. Start of next token foud by scanning forward to next delimiter byte
 		myArgc++; //increment index
 	}
-
-//***PRINT arguments array***//
-	// puts("Argv array contents BEFORE split:");
-	// for (int i = 0; i < myArgc; i++) { 
-	// 	printf("[%d]: %s\n",i,myArgv[i]);
-	// }
 }
 
 /**
@@ -78,6 +75,8 @@ does NOT include delimiters */
 */
 int splitCmd() {
 	int descriptor = -1;
+	
+	//make two arrays, split command into two arg arrays
 
 	for (int i = 0; i < myArgc; ++i) {
 
@@ -105,21 +104,28 @@ int splitCmd() {
 			}    
 		}
 
+
 		else if(strcmp("|",myArgv[i]) == 0) {
 			descriptor = 2;
 		  //shift elements in array so we don't store "|"
+			myArgv[i+1] = NULL;
+
 			for (int j = i; j < myArgc; ++j) {
+
 				 myArgv[j] = myArgv[j+1];
 				 myArgc--;
 			}
+			//now loop and store contents to second array 
 		}
 	}
-		puts("Argv array contents after shuffling split:");
-	for (int i = 0; i < myArgc; i++) { 
-		printf("[%d]: %s\n",i,myArgv[i]);
-	}
+		puts("Argv2 array contents");
+		printArgs(myArgv2);
+		puts("Argv array 1:");
+		printArgs(myArgv);
+
 	return descriptor;
 }
+
 
 
 /**
@@ -133,6 +139,7 @@ void clearCmd() {
 
         while (myArgc != 0) {
              myArgv[myArgc] = NULL; // delete element at argc
+             myArgv2[myArgc2] = NULL;
              myArgc--;       // decrement the number of words in the command line
         }
         stuff = 0;       // erase the number of chars in the buffer
@@ -185,7 +192,7 @@ void execute(char* cmd[]) {
 	pid_t pid;
 	int status;
 	int bytesRead;
-	char readBuffer[BUF_SIZE]; //what size??
+	char readBuffer[BUF_SIZE];
 	int fd0, fd1;
 
     int descriptor = splitCmd();
@@ -248,16 +255,16 @@ void execute(char* cmd[]) {
 			} 
 
 			if (descriptor == 0) { //IN/READ command
-				if( close(1) == -1) {
-					perror("Close stdout error");
-					exit(1);
-				}
+				// if( close(1) == -1) { //THIS WAS MY PROBLEM WOOPSIE
+				// 	perror("Close stdout error");
+				// 	exit(1);
+				// }
 				int fd0 = open(inputFile, O_RDONLY); //open the input file in read only mode
 				if(fd0 == -1) {
 					perror("Error opening input file");
 					exit(1);
 				}
-				close(0); //close normal stdout
+				close(0); //close normal stdin
 				fd[0] = fd0;
       			if(dup2(fd[0], STDIN_FILENO) == -1) { //redirect stdin to fd[0] (inputFile)
       				perror("Error duping stdin");
@@ -325,6 +332,15 @@ void welcome() {
 	printf("---------------------------------------------------------------\n");
     printf("\n\n");
 
+}
+
+/**
+ *  Function that prints the contents of the array (for testing purposes)
+ */
+void printArgs(char* args[]) {
+	for(int i =0; i < myArgc; i++) {
+		printf("[%d]: %s\n",i,args[i]);
+	}
 }
 
 int main(int argc, char* argv[]) {
