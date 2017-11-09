@@ -1,0 +1,125 @@
+Script started on Thu 09 Nov 2017 10:55:24 AM AKST
+]0;hillari@inspiron ~/---/3 $[00m l[Kmake
+gcc -o mySh mysh.c 
+]0;hillari@inspiron ~/---/3 $[00m ./mySh 
+
+---------------------------------------------------------------
+ *Welcome to my shell. Enter a command, or type exit/CTRL+D* 
+---------------------------------------------------------------
+
+
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out		       DesignDescription.pdf  hello.txt     makefile  mysh.c
+DesignDescription.odt  dShLog.log	      logTests.log  mySh      README.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls -la
+total 180
+drwxrwxr-x 3 hillari hillari  4096 Nov  9 10:55 .
+drwxrwxr-x 8 hillari hillari  4096 Nov  9 10:30 ..
+-rwxrwxr-x 1 hillari hillari 14392 Nov  9 10:36 a.out
+-rw-rw-r-- 1 hillari hillari 26870 Oct 26 16:13 DesignDescription.odt
+-rw-rw-r-- 1 hillari hillari 20515 Oct 19 19:44 DesignDescription.pdf
+-rw-rw-r-- 1 hillari hillari  4578 Nov  9 10:54 dShLog.log
+drwxrwxr-x 8 hillari hillari  4096 Nov  9 10:52 .git
+-rw------- 1 hillari hillari   188 Oct 19 19:34 hello.txt
+-rw-rw-r-- 1 hillari hillari     0 Nov  9 10:55 logTests.log
+-rw-rw-r-- 1 hillari hillari    97 Nov  4 13:07 makefile
+-rwxrwxr-x 1 hillari hillari 14392 Nov  9 10:55 mySh
+-rw-rw-r-- 1 hillari hillari  8495 Nov  9 10:36 mysh.c
+-rw-rw-r-- 1 hillari hillari   356 Nov  4 16:10 README.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ whoami
+hillari
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ pwd
+/home/hillari/Dropbox/School/Fall17/OS_320/3
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ not A real Command
+execvp error: No such file or directory
+Exited with status: 1
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ touch newFile.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out		       DesignDescription.pdf  hello.txt     makefile  mysh.c	   README.txt
+DesignDescription.odt  dShLog.log	      logTests.log  mySh      newFile.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ echo Output redirection WOO ^_^ > newFile.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cat NewFile.txt errorcheck!
+cat: 'errorcheck!': No such file or directory
+Exited with status: 1
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cat newFile.txt
+Output redirection WOO ^_^
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ echo INput recirection now !
+INput recirection now!
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ cat < hello.txt
+    October 2017      
+Su Mo Tu We Th Fr Sa  
+ 1  2  3  4  5  6  7  
+ 8  9 10 11 12 13 14  
+15 16 17 18 _1_9 20 21  
+22 23 24 25 26 27 28  
+29 30 31              
+                      
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls -l
+total 164
+-rwxrwxr-x 1 hillari hillari 14392 Nov  9 10:36 a.out
+-rw-rw-r-- 1 hillari hillari 26870 Oct 26 16:13 DesignDescription.odt
+-rw-rw-r-- 1 hillari hillari 20515 Oct 19 19:44 DesignDescription.pdf
+-rw-rw-r-- 1 hillari hillari  4578 Nov  9 10:54 dShLog.log
+-rw------- 1 hillari hillari   188 Oct 19 19:34 hello.txt
+-rw-rw-r-- 1 hillari hillari     0 Nov  9 10:55 logTests.log
+-rw-rw-r-- 1 hillari hillari    97 Nov  4 13:07 makefile
+-rwxrwxr-x 1 hillari hillari 14392 Nov  9 10:55 mySh
+-rw-rw-r-- 1 hillari hillari  8495 Nov  9 10:36 mysh.c
+-rw-rw-r-- 1 hillari hillari    27 Nov  9 10:57 newFile.txt
+-rw-rw-r-- 1 hillari hillari   356 Nov  4 16:10 README.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ chmod -777 newFile.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls -l
+total 168
+-rwxrwxr-x 1 hillari hillari 14392 Nov  9 10:36 a.out
+-rw-rw-r-- 1 hillari hillari 26870 Oct 26 16:13 DesignDescription.odt
+-rw-rw-r-- 1 hillari hillari 20515 Oct 19 19:44 DesignDescription.pdf
+-rw-rw-r-- 1 hillari hillari  4578 Nov  9 10:54 dShLog.log
+-rw------- 1 hillari hillari   188 Oct 19 19:34 hello.txt
+-rw-rw-r-- 1 hillari hillari  4096 Nov  9 10:59 logTests.log
+-rw-rw-r-- 1 hillari hillari    97 Nov  4 13:07 makefile
+-rwxrwxr-x 1 hillari hillari 14392 Nov  9 10:55 mySh
+-rw-rw-r-- 1 hillari hillari  8495 Nov  9 10:36 mysh.c
+---------- 1 hillari hillari    27 Nov  9 10:57 newFile.txt
+-rw-rw-r-- 1 hillari hillari   356 Nov  4 16:10 README.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ chmod -743 newFile.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ clear
+[3;J[H[2JExited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls -ai
+1470794 .		       1471254 dShLog.log    1448878 mySh
+1460252 ..		       1475494 .git	     1455466 mysh.c
+1455483 a.out		       1462133 hello.txt     1455482 newFile.txt
+1448502 DesignDescription.odt  1448815 logTests.log  1455467 README.txt
+1465871 DesignDescription.pdf  1454964 makefile
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out		       DesignDescription.pdf  hello.txt     makefile  mysh.c	   README.txt
+DesignDescription.odt  dShLog.log	      logTests.log  mySh      newFile.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ rm newFile.txt
+rm: remove write-protected regular file 'newFile.txt'? y
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ls
+a.out		       DesignDescription.pdf  hello.txt     makefile  mysh.c
+DesignDescription.odt  dShLog.log	      logTests.log  mySh      README.txt
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ echo EOF workds
+EOF works
+Exited with status: 0
+hillari  ~/home/hillari/Dropbox/School/Fall17/OS_320/3 $ ]0;hillari@inspiron ~/Dropbox/School/Fall17/OS_320/3[01;32mhillari@inspiron[00m [01;34m~/Dropbox/School/Fall17/OS_320/3 $[00m exit
+exit
+
+Script done on Thu 09 Nov 2017 11:04:24 AM AKST

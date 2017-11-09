@@ -58,10 +58,11 @@ void parseCmd() {
 * Take the buffer,tokenize, and store to char array
 */
 void fillCmd() {
+	/*STRTOK - each cal to strtok returns null-terminated string containing the next token. 
+does NOT include delimiters */
+
 	char* bPtr; //token
 	bPtr = strtok(buffer, DELIMITERS); 
-/*STRTOK - each cal to strtok returns null-terminated string containing the next token. 
-does NOT include delimiters */
 	while(bPtr) { 
 		myArgv[myArgc] = bPtr; //each bPtr equals a string we want, so store to array
 		bPtr = strtok(NULL, DELIMITERS); //tokenize again. Start of next token foud by scanning forward to next delimiter byte
@@ -108,22 +109,27 @@ int splitCmd() {
 		else if(strcmp("|",myArgv[i]) == 0) {
 			descriptor = 2;
 		  //shift elements in array so we don't store "|"
-			myArgv[i+1] = NULL;
+			//myArgv[i+1] = NULL;
 
-			for (int j = i; j < myArgc; ++j) {
-
+			for (int j = i; j < i + 1; ++j) {
 				 myArgv[j] = myArgv[j+1];
 				 myArgc--;
 			}
-			//now loop and store contents to second array 
+
+			//TODO store contents to two arrays 
+
+			// for (int j = 0; j < myArgc; j++) {
+			// 	myArgv2[j] = myArgv[j];
+			// 	//myArgc--;
+			// }
 		}
 	}
-		puts("Argv2 array contents");
-		printArgs(myArgv2);
-		puts("Argv array 1:");
-		printArgs(myArgv);
+		// puts("Argv array 1:");
+		// printArgs(myArgv);
+		// puts("Argv array 2");
+		// printArgs(myArgv2);
 
-	return descriptor;
+	return descriptor; 
 }
 
 
@@ -255,7 +261,7 @@ void execute(char* cmd[]) {
 			} 
 
 			if (descriptor == 0) { //IN/READ command
-				// if( close(1) == -1) { //THIS WAS MY PROBLEM WOOPSIE
+				// if( close(1) == -1) { //THIS WAS PROBLEM - caused in redirection to fail 
 				// 	perror("Close stdout error");
 				// 	exit(1);
 				// }
@@ -276,7 +282,7 @@ void execute(char* cmd[]) {
         		}
 			}
 
-			if (descriptor == 2) { //PIPE cmd
+			if (descriptor == 2) { //PIPE 
 				pipeCmd(myArgv);
 			}
 
@@ -338,8 +344,10 @@ void welcome() {
  *  Function that prints the contents of the array (for testing purposes)
  */
 void printArgs(char* args[]) {
-	for(int i =0; i < myArgc; i++) {
+	for(int i =0; i < 10; i++) {
+		//if(args[i] != NULL) {
 		printf("[%d]: %s\n",i,args[i]);
+	    //}
 	}
 }
 
