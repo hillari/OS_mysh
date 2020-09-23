@@ -1,3 +1,15 @@
+// Hillari M. Denny
+// CSCE A321 - Operating Systems
+// Fall 2017
+//
+// Update 9/23/2020
+// This file implements a simple shell in c. The purpose of this exercise is to gain
+// a better understanding of inter-process communication (IPC). Note there are some 
+// minor bugs that were not worked out due to time constraints. Most notably, EOF (CTRL+D)
+// seems to be a bit buggy. Perhaps someday I'll go back and debug this...The project
+// could also use some structural re-organization (headers, etc). 
+
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
